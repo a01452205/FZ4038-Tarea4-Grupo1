@@ -110,7 +110,7 @@ Como control adicional, dos rendimientos se recalcularon manualmente a partir de
 La rúbrica no fija una frecuencia única para los datos, por lo que la elección debe justificarse. Se utilizan rendimientos **diarios** por las siguientes razones:
 
 1. **Comparabilidad entre Bloomberg y LSEG.** El precio de cierre diario es el dato oficial de cada día de operación y es el mismo en ambos proveedores (por ejemplo, el último cierre de AAPL es 340.97 en los dos). Las barras intradía, en cambio, las construye cada proveedor con sus propias reglas de agregación y de horario, de modo que una diferencia en una regresión de minutos podría deberse al proveedor y no al modelo. Con datos diarios el cotejo entre Bloomberg y RStudio es limpio.
-2. **Horizonte de la estrategia.** El portafolio se construye con un horizonte de varias semanas, no de operaciones intradía. La beta que importa para esa decisión es la que describe cómo se mueve cada acción frente al mercado de un día a otro.
+2. **Horizonte de la estrategia.** El portafolio se construye con un horizonte de varias semanas, no de operaciones intradía. La beta contra el S&P 500 que importa para esa decisión es la que describe cómo se mueve cada acción frente al mercado de un día a otro.
 3. **Evidencia de la Actividad 3.** En esa actividad, con datos de 1 y 5 minutos, la autocorrelación de los residuos a 1 minuto desaparecía al pasar a 5 minutos. Esto es consistente con el efecto de microestructura del mercado (ruido de las operaciones y no sincronía entre activos, conocido como efecto Epps), que distorsiona las correlaciones a frecuencias muy altas. A frecuencia diaria ese problema es menor.
 4. **Tamaño de la muestra.** El periodo produce 444 observaciones por serie, suficientes para estimar betas y correlaciones con precisión razonable.
 
@@ -587,7 +587,7 @@ knitr::kable(resumen_reg, digits = 3, row.names = FALSE,
 
 En la tabla se observa que el $R^2$ de cada regresión es el cuadrado de la correlación con el S&P 500 (por ejemplo, para GS, 0.749² ≈ 0.561), lo que conecta los resultados de la Parte 2 con los de esta parte. A partir de la tabla se identifican los siguientes hallazgos:
 
-**1. Tres grupos de acciones según su beta.**
+**1. Tres grupos de acciones según su beta contra el S&P 500.**
 
 - **Betas altas:** NVDA (1.947) y GS (1.471) amplifican los movimientos del mercado, y AAPL (1.123) se mueve ligeramente más que el mercado. En los tres casos el mercado explica una parte importante de su variación diaria ($R^2$ de 0.383 a 0.561).
 - **Betas cercanas a 1:** MSFT (0.955) y JPM (0.930) se mueven prácticamente al mismo ritmo que el mercado, con $R^2$ de 0.277 y 0.414.
@@ -597,7 +597,7 @@ En la tabla se observa que el $R^2$ de cada regresión es el cuadrado de la corr
 
 **3. Una beta baja no significa poco riesgo.** En las acciones de energía la beta es baja porque el S&P 500 explica muy poco de su comportamiento, no porque sus rendimientos sean estables. Su variación depende sobre todo de factores propios de la acción o del sector, que la regresión no captura. USO es el caso más claro: tiene la beta más baja, pero también la mayor desviación estándar del error de las ocho regresiones (2.703 en la captura de Bloomberg), es decir, la mayor variación no explicada por el mercado.
 
-**4. Implicación para el portafolio.** El portafolio combina acciones con beta cercana o superior a 1 (AAPL, MSFT y JPM) con posiciones de beta baja (XOM y USO). Estas últimas reducen la exposición del portafolio a los movimientos del mercado y aportan diversificación, en línea con las correlaciones de la Parte 2. Sin embargo, por el punto anterior, no reducen necesariamente el riesgo total: introducen un riesgo propio del sector energético, en particular del precio del petróleo.
+**4. Implicación para el portafolio.** El portafolio combina acciones con beta contra el S&P 500 cercana o superior a 1 (AAPL, MSFT y JPM) con posiciones de beta baja (XOM y USO). Estas últimas reducen la exposición del portafolio a los movimientos del mercado y aportan diversificación, en línea con las correlaciones de la Parte 2. Sin embargo, por el punto anterior, no reducen necesariamente el riesgo total: introducen un riesgo propio del sector energético, en particular del precio del petróleo.
 
 Como se señaló en la sección 1.2, los días extremos de abril de 2025 pueden influir de forma importante en estas estimaciones, lo que se aprecia en el punto aislado del extremo derecho de todas las gráficas.
 
@@ -666,7 +666,7 @@ res_djo <- t(sapply(activos, function(a) estima(rend_jo, a)))
 res_30  <- t(sapply(activos, function(a) estima(rend30,  a)))
 ```
 
-La siguiente tabla compara la beta de cada acción en las tres versiones:
+La siguiente tabla compara la beta contra el S&P 500 de cada acción en las tres versiones:
 
 ```{r tabla-betas-3}
 knitr::kable(data.frame(Activo = activos,
@@ -738,7 +738,7 @@ En esta parte se presentan las operaciones realizadas en el simulador HowMarkets
 
 ## 4.1 Operaciones en HowMarketsWork – Daniel Mondragón Monroy
 
-### 4.1.1 Portafolio inicial (13 oct 2026) 
+### 4.1.1 Portafolio inicial 
 
 En la siguiente imagen se observa el portafolio en HowMarketsWork al 13 de octubre de 2026, antes de las operaciones de esta actividad.
 
@@ -748,7 +748,7 @@ knitr::include_graphics("hmw_daniel_posiciones_antes.png")
 
 El portafolio tiene un valor total de $1,027,943.54, con cinco posiciones largas, las mismas de la Tarea 3, y ninguna posición en corto: MSFT (470 títulos, $255,421.50), AAPL (730 títulos, $249,127.10), XOM (1,216 títulos, $211,681.28), JPM (602 títulos, $199,520.86) y USO (340 títulos, $52,050.60). El efectivo disponible es de $60,142.20.
 
-**Beta del portafolio contra S&P 500.** Para medir qué tan expuesto está el portafolio a los movimientos del mercado se calcula su beta contra el S&P 500. La beta de un portafolio es el promedio de las betas de sus posiciones, ponderado por el peso de cada una en el valor total:
+**Beta del portafolio contra el S&P 500.** Para medir qué tan expuesto está el portafolio a los movimientos del mercado se calcula su beta contra el S&P 500. La beta de un portafolio es el promedio de las betas de sus posiciones, ponderado por el peso de cada una en el valor total:
 
 $$\beta_{portafolio} = \sum_{i} w_i \, \beta_i$$
 
@@ -767,31 +767,33 @@ beta_antes <- sum(posiciones$Contribucion)
 
 knitr::kable(posiciones, digits = c(0, 0, 2, 1, 3, 3), row.names = FALSE,
              format.args = list(big.mark = ","),
-             col.names = c("Activo", "Títulos", "Valor (USD)", "Peso (%)", "Beta", "Peso × Beta"),
+             col.names = c("Activo", "Títulos", "Valor (USD)", "Peso (%)", "Beta vs. S&P 500", "Peso × Beta"),
              caption = "Portafolio inicial al 13 de octubre de 2026")
 ```
 
-La última columna es la contribución de cada posición a la beta del portafolio, y su suma es la beta del portafolio: `r round(beta_antes, 2)`. Es decir, ante un movimiento de 1% del S&P 500, el portafolio se mueve en promedio alrededor de `r round(beta_antes, 2)`%. Es menor a 1 por el peso de XOM y USO, cuyas betas son bajas, y por el efectivo. MSFT (24.8%) y AAPL (24.2%) están prácticamente en el límite de 25% por posición, por lo que no admiten compras adicionales.
+La última columna es la contribución de cada posición a la beta del portafolio contra el S&P 500, y su suma es la beta del portafolio contra el S&P 500: `r round(beta_antes, 2)`. Es decir, ante un movimiento de 1% del S&P 500, el portafolio se mueve en promedio alrededor de `r round(beta_antes, 2)`%. Es menor a 1 por el peso de XOM y USO, cuyas betas contra el S&P 500 son bajas, y por el efectivo. MSFT (24.8%) y AAPL (24.2%) están prácticamente en el límite de 25% por posición, por lo que no admiten compras adicionales.
 
 ### 4.1.2 Estrategia
 
-La estrategia realiza operaciones adicionales únicamente con acciones ya analizadas en esta actividad y en los modelos de las tareas anteriores. Se mantienen las cinco posiciones del portafolio y se agrega una venta en corto de Goldman Sachs (GS), acción que no forma parte del portafolio pero que se analizó en la Parte 3 (sección 3.6) y fue variable independiente de los modelos de JPM de la Tarea 2 (mt102) y de la Tarea 3 (mt302). Se utilizan distintos tipos de operación (venta, compra adicional, venta en corto y recompra) y distintos tipos de orden (de mercado, límite y stop).
+La estrategia realiza operaciones adicionales únicamente con acciones ya analizadas en esta actividad y en los modelos de las tareas anteriores. Se mantienen las cinco posiciones del portafolio y se agrega una venta en corto de Goldman Sachs (GS), acción que no forma parte del portafolio pero que se analizó en la Parte 3 (sección 3.6) y fue variable independiente de los modelos de JPM de la Tarea 2 (mt102) y de la Tarea 3 (mt302). Se utilizan distintos tipos de operación (venta, compra adicional, venta en corto y recompra), distintos tipos de orden (de mercado, límite y stop) y distintas vigencias (de un día e indefinida).
 
-Las órdenes 1 a 3 se colocan el 13 de octubre de 2026, con el mercado cerrado, para ejecutarse a la apertura del día siguiente. La orden 4 se coloca una vez ejecutada la venta en corto, porque protege una posición que antes no existe. El resultado final de la estrategia depende de que las órdenes se ejecuten: las de mercado se ejecutan al precio de apertura, la orden límite solo si el precio llega al nivel indicado, y la orden stop solo si GS sube hasta su nivel.
+Las órdenes 1 a 3 se colocan el 13 de octubre de 2026, con el mercado cerrado, para ejecutarse a partir de la apertura del día siguiente. La orden 4 se coloca una vez ejecutada la venta en corto, porque protege una posición que antes no existe. El resultado de la estrategia depende de que las órdenes se ejecuten: las de mercado se ejecutan al precio de apertura, la orden límite solo si el precio llega al nivel indicado, y la orden stop solo si GS sube hasta su nivel.
 
-| # | Operación | Acción | Tipo de orden | Títulos |
-|---|---|---|---|---|
-| 1 | Venta parcial | USO | Mercado | 170 |
-| 2 | Compra adicional | XOM | Límite a $174.00 | 100 |
-| 3 | Venta en corto (*short*) | GS | Mercado | 55 |
-| 4 | Recompra (*cover*) de protección | GS | Stop a $963.00 | 55 |
+| # | Operación | Acción | Tipo de orden | Vigencia | Títulos |
+|---|---|---|---|---|---|
+| 1 | Venta parcial | USO | Mercado | Un día | 170 |
+| 2 | Compra adicional | XOM | Límite a $174.00 | Un día | 100 |
+| 3 | Venta en corto (*short*) | GS | Mercado | Un día | 55 |
+| 4 | Recompra (*cover*) de protección | GS | Stop a 8% sobre el precio de ejecución de la orden 3 | Indefinida | 55 |
 
 La justificación de cada operación es la siguiente:
 
-1. **Venta parcial de USO.** USO es la posición con menor sustento en el análisis: su beta no es estadísticamente significativa (valor p de 0.154), tiene la mayor variación no explicada por el mercado de las ocho regresiones (desviación estándar del error de 2.703) y está correlacionada con XOM en todas las versiones analizadas (entre 0.519 y 0.715), por lo que duplica la exposición a energía. No se vende completa porque, de julio a octubre de 2026, su beta fue de −2.647 (sección 3.11): en los meses recientes funcionó como cobertura frente a las caídas del mercado. Vender la mitad equilibra ambos resultados.
-2. **Compra adicional de XOM.** Reemplaza parte de la exposición a energía que se reduce con la venta de USO, pero con menor riesgo propio (desviación estándar del error de 1.604, contra 2.703 de USO). Con la compra, XOM pasa de 20.6% a cerca de 22.3% del portafolio, por debajo del límite de 25%. Se usa una orden límite a $174.00, cercana al último precio ($174.08), para no pagar un precio mayor si el mercado abre al alza; si el precio no llega a ese nivel, la orden queda pendiente y no se ejecuta.
+1. **Venta parcial de USO.** USO es la posición con menor sustento en el análisis: su beta contra el S&P 500 no es estadísticamente significativa (valor p de 0.154), tiene la mayor variación no explicada por el mercado de las ocho regresiones (desviación estándar del error de 2.703) y está correlacionada con XOM en todas las versiones analizadas (entre 0.519 y 0.715), por lo que duplica la exposición a energía. No se vende completa porque, de julio a octubre de 2026, su beta contra el S&P 500 fue de −2.647 (sección 3.11): en los meses recientes funcionó como cobertura frente a las caídas del mercado. Vender la mitad equilibra ambos resultados.
+2. **Compra adicional de XOM.** Reemplaza parte de la exposición a energía que se reduce con la venta de USO, pero con menor riesgo propio (desviación estándar del error de 1.604, contra 2.703 de USO). Con la compra, XOM pasaría de 20.6% a cerca de 22.3% del portafolio, por debajo del límite de 25%. Se usa una orden límite a $174.00, cercana al último precio ($174.08), para no pagar un precio mayor si el mercado abre al alza; si el precio no llega a ese nivel, la orden vence sin ejecutarse.
 3. **Venta en corto de GS.** No es una apuesta contra Goldman Sachs, sino una cobertura del riesgo de mercado del portafolio. GS es la acción con el $R^2$ más alto (0.561), es decir, la que más depende del S&P 500, lo que la hace la cobertura más confiable entre las ocho acciones; además, su correlación de 0.740 con JPM cubre en parte la posición en el sector financiero. La cobertura tiene un costo: si el mercado sube, la venta en corto pierde y reduce las ganancias del resto del portafolio; a cambio, si el mercado cae, amortigua las pérdidas. El tamaño es pequeño (cerca de 5% del portafolio) para limitar este efecto.
-4. **Recompra de protección de GS.** En una venta en corto, la pérdida no tiene un límite teórico si el precio sube. La orden stop a $963.00, 8% por arriba del último precio de GS ($891.91 al 13 de octubre de 2026), cierra automáticamente la posición si GS sube a ese nivel. El margen de 8% evita que la orden se active con un movimiento normal de un día: el 13 de octubre, GS se movió entre $891.01 y $931.00, un rango superior a 4%. Por su naturaleza, esta orden normalmente no se ejecuta; solo se activa si el precio sube de forma importante.
+4. **Recompra de protección de GS.** En una venta en corto, la pérdida no tiene un límite teórico si el precio sube. La orden stop cierra automáticamente la posición si GS sube 8% sobre el precio al que se ejecutó la venta en corto, de modo que la pérdida máxima de la posición queda acotada. El margen de 8% evita que la orden se active con un movimiento normal de un día: el 13 de octubre, GS se movió entre $891.01 y $931.00, un rango superior a 4%. Se coloca con vigencia indefinida (*Good til Cancel*), porque la protección debe mantenerse activa mientras exista la posición en corto. Por su naturaleza, esta orden normalmente no se ejecuta; solo se activa si el precio sube de forma importante.
+
+**Regla de seguimiento para la orden límite.** Si la orden 2 vence sin ejecutarse, se vuelve a colocar con el mismo precio límite de $174.00, pero con vigencia indefinida. No se sube el precio límite para perseguir el precio de mercado: el criterio de compra se mantiene, y la orden queda activa hasta que XOM llegue a ese nivel o hasta que se cancele.
 
 **Efecto estimado en el portafolio.** La siguiente tabla estima cómo quedaría el portafolio si las órdenes 1 a 3 se ejecutaran a los precios de referencia del 13 de octubre (USO a $153.09, XOM a $174.00 y GS a $891.91). La venta en corto se registra con valor negativo, porque gana cuando el precio baja, y el efectivo aumenta con lo obtenido de las ventas y se reduce con la compra.
 
@@ -818,25 +820,27 @@ knitr::kable(estimado, digits = c(0, 2, 1, 3, 3), row.names = FALSE,
              caption = "Portafolio estimado después de las operaciones 1 a 3")
 ```
 
-Si las órdenes se ejecutan a estos precios, la beta del portafolio bajaría de `r round(beta_antes, 2)` a `r round(beta_estimada, 2)`: el portafolio se vuelve más defensivo frente a los movimientos del mercado, sin modificar AAPL ni MSFT, que ya están en el límite de 25%. El valor total del portafolio no cambia por las operaciones, solo su composición. El resultado real se verifica con el portafolio final (sección 4.1.5).
+Si las órdenes se ejecutan a estos precios, la beta del portafolio contra el S&P 500 bajaría de `r round(beta_antes, 2)` a `r round(beta_estimada, 2)`: el portafolio se vuelve más defensivo frente a los movimientos del mercado, sin modificar AAPL ni MSFT, que ya están en el límite de 25%. El valor total del portafolio no cambia por las operaciones, solo su composición. El resultado real se verifica con el portafolio final (sección 4.1.5).
 
 ### 4.1.3 Órdenes colocadas
 
 En esta sección se presentan las órdenes tal como se colocaron en HowMarketsWork. Cada imagen muestra la pantalla de la orden antes de confirmarla: el tipo de operación (*Action*), la acción (*Symbol*), el número de títulos (*Quantity*), el tipo de orden (*Type*), el precio límite o stop cuando aplica (*Limit/Stop Price*), la vigencia de la orden (*Order Term*) y la cotización de la acción al momento de colocarla. En la parte inferior, el simulador muestra un resumen de la orden con la comisión de $10.00 por operación y el monto estimado.
 
-**Orden 1: venta parcial de USO.** En la siguiente imagen se observa la orden de venta (*Sell*) de 170 títulos de USO a mercado (*Market*), con vigencia de un día (*Good for Day*), colocada el 13 de octubre de 2026. El último precio de USO era de $153.09 y el monto estimado de la venta, de $26,017.00, corresponde a 170 títulos al precio de compra del mercado (*bid*) de $153.10, menos la comisión.
+#### Órdenes del 13 de octubre de 2026
+
+**Orden 1: venta parcial de USO.** En la siguiente imagen se observa la orden de venta (*Sell*) de 170 títulos de USO a mercado (*Market*), con vigencia de un día (*Good for Day*). El último precio de USO era de $153.09 y el monto estimado de la venta, de $26,017.00, corresponde a 170 títulos al precio de compra del mercado (*bid*) de $153.10, menos la comisión.
 
 ```{r hmw-orden1, echo=FALSE, out.width="90%"}
 knitr::include_graphics("hmw_daniel_orden1_venta_uso.png")
 ```
 
-**Orden 2: compra adicional de XOM.** En la siguiente imagen se observa la orden de compra (*Buy*) de 100 títulos de XOM con orden límite (*Limit*) a $174.00 y vigencia de un día, colocada el 13 de octubre de 2026. El último precio de XOM era de $174.08 y el precio de venta del mercado (*ask*) de $174.15, ligeramente por arriba del límite: la orden solo se ejecuta si XOM se ofrece a $174.00 o menos. El costo estimado es de $17,410.00, incluida la comisión.
+**Orden 2: compra adicional de XOM.** En la siguiente imagen se observa la orden de compra (*Buy*) de 100 títulos de XOM con orden límite (*Limit*) a $174.00 y vigencia de un día. El último precio de XOM era de $174.08 y el precio de venta del mercado (*ask*) de $174.15, ligeramente por arriba del límite: la orden solo se ejecuta si XOM se ofrece a $174.00 o menos. El costo estimado es de $17,410.00, incluida la comisión.
 
 ```{r hmw-orden2, echo=FALSE, out.width="90%"}
 knitr::include_graphics("hmw_daniel_orden2_compra_xom.png")
 ```
 
-**Orden 3: venta en corto de GS.** En la siguiente imagen se observa la orden de venta en corto (*Short*) de 55 títulos de GS a mercado, con vigencia de un día, colocada el 13 de octubre de 2026. El último precio de GS era de $891.91 y el monto estimado, de $49,077.50, corresponde a 55 títulos al precio *bid* de $892.50, menos la comisión, lo que representa cerca de 4.8% del valor del portafolio.
+**Orden 3: venta en corto de GS.** En la siguiente imagen se observa la orden de venta en corto (*Short*) de 55 títulos de GS a mercado, con vigencia de un día. El último precio de GS era de $891.91 y el monto estimado, de $49,077.50, corresponde a 55 títulos al precio *bid* de $892.50, menos la comisión, lo que representa cerca de 4.8% del valor del portafolio.
 
 ```{r hmw-orden3, echo=FALSE, out.width="90%"}
 knitr::include_graphics("hmw_daniel_orden3_short_gs.png")
@@ -848,15 +852,105 @@ knitr::include_graphics("hmw_daniel_orden3_short_gs.png")
 knitr::include_graphics("hmw_daniel_ordenes_pendientes.png")
 ```
 
-**Orden 4: recompra de protección de GS.** Una vez ejecutada la venta en corto, el 14 de octubre de 2026 se colocó la orden de protección. En la siguiente imagen se observa la orden de recompra (*Cover*) de 55 títulos de GS con orden stop (*Stop*) a $963.00. A diferencia de las órdenes anteriores, su vigencia es indefinida (*Good til Cancel*): la protección debe mantenerse activa todos los días mientras exista la posición en corto, y no solo durante un día.
+#### Órdenes del 14 de octubre de 2026
+
+El 14 de octubre, a la apertura, se ejecutaron la venta de USO y la venta en corto de GS, y la orden límite de XOM venció sin ejecutarse (el detalle de la ejecución se presenta en la sección 4.1.4). Con base en esos resultados, ese día se colocaron dos órdenes nuevas, de acuerdo con la estrategia de la sección 4.1.2.
+
+**Orden 4: recompra de protección de GS.** Una vez ejecutada la venta en corto a $879.00, se colocó la orden de protección. En la siguiente imagen se observa la orden de recompra (*Cover*) de 55 títulos de GS con orden stop (*Stop*) a $949.00, que equivale a 8% por arriba del precio de ejecución de la venta en corto ($879.00 × 1.08 = $949.32, redondeado a $949.00). Su vigencia es indefinida (*Good til Cancel*): la protección se mantiene activa todos los días mientras exista la posición en corto. Al momento de colocarla, el último precio de GS era de $878.72, por lo que la orden solo se activaría si GS sube cerca de 8% desde ese nivel.
 
 ```{r hmw-orden4, echo=FALSE, out.width="90%"}
 knitr::include_graphics("hmw_daniel_orden4_stop_gs.png")
 ```
 
+**Orden 5: nueva compra límite de XOM.** De acuerdo con la regla de seguimiento de la sección 4.1.2, la orden límite de XOM que venció se volvió a colocar con el mismo precio límite y vigencia indefinida. En la siguiente imagen se observa la orden de compra (*Buy*) de 100 títulos de XOM con orden límite a $174.00 y vigencia *Good til Cancel*. Al momento de colocarla, XOM cotizaba en $177.01, por arriba del límite, por lo que la orden solo se ejecutará si el precio baja a $174.00.
+
+```{r hmw-orden5, echo=FALSE, out.width="90%"}
+knitr::include_graphics("hmw_daniel_orden5_compra_xom_gtc.png")
+```
+
 ### 4.1.4 Ejecución de las órdenes
 
+En la siguiente imagen se observa la lista de órdenes del simulador al cierre del 14 de octubre de 2026. Incluye las tres órdenes colocadas el 13 de octubre, con su resultado, y las dos órdenes colocadas el 14 de octubre, que siguen abiertas. La columna *Trade Price* muestra el precio al que se ejecutó cada orden y la columna *Status* su estado: ejecutada (*Filled*), vencida (*Expired*) o abierta, cuando conserva las opciones para cancelarla o editarla (*Cancel* y *Edit*).
+
+```{r hmw-ordenes-14oct, echo=FALSE, out.width="90%"}
+knitr::include_graphics("hmw_daniel_ordenes_abiertas_14oct.png")
+```
+
+La siguiente tabla resume el resultado de cada orden al 14 de octubre de 2026:
+
+| # | Operación | Acción | Títulos | Precio de referencia (13 oct) | Resultado | Precio de ejecución |
+|---|---|---|---|---|---|---|
+| 1 | Venta parcial (mercado) | USO | 170 | $153.09 | Ejecutada | $154.08 |
+| 2 | Compra adicional (límite a $174.00, un día) | XOM | 100 | $174.08 | Vencida | — |
+| 3 | Venta en corto (mercado) | GS | 55 | $891.91 | Ejecutada | $879.00 |
+| 4 | Recompra de protección (stop a $949.00, indefinida) | GS | 55 | — | Abierta | — |
+| 5 | Compra adicional (límite a $174.00, indefinida) | XOM | 100 | — | Abierta | — |
+
+El resultado de cada orden es el siguiente:
+
+- **Orden 1 (USO):** se ejecutó a la apertura a $154.08, $0.99 por arriba del precio de referencia, por lo que la venta obtuvo $26,183.60 después de la comisión ($168.30 más de lo estimado).
+- **Orden 2 (XOM):** venció sin ejecutarse. Durante el 14 de octubre, XOM no bajó del límite de $174.00: su precio mínimo del día fue de $174.53 y cerró en $177.01. Es el comportamiento esperado de una orden límite: protege el precio máximo de compra, a cambio de no garantizar la ejecución.
+- **Orden 3 (GS):** se ejecutó a la apertura a $879.00, $12.91 por debajo del precio de referencia, porque GS abrió a la baja. Al cierre del día, GS cotizaba en $878.72, por lo que la posición en corto registraba una ganancia de $15.40.
+- **Órdenes 4 y 5:** quedaron abiertas con vigencia indefinida. La orden stop solo se activará si GS sube a $949.00, y la nueva compra límite solo si XOM baja a $174.00. Su resultado depende del comportamiento del mercado en los días siguientes.
+
+Como verificación, el efectivo del portafolio cuadra con las operaciones ejecutadas: $60,142.20 iniciales, más $26,183.60 de la venta de USO, menos $10.00 de comisión de la venta en corto, dan $86,315.80, que es el saldo que muestra el simulador en la sección 4.1.5.
+
 ### 4.1.5 Portafolio final
+
+En la siguiente imagen se observa el portafolio en HowMarketsWork al cierre del 14 de octubre de 2026, después de la ejecución de las órdenes. El portafolio tiene ahora cinco posiciones largas (USO, XOM, JPM, MSFT y AAPL) y una posición en corto (GS, con −55 títulos). En la parte superior se muestran el valor total del portafolio ($1,030,714.22), el efectivo ($86,315.80) y el poder de compra.
+
+```{r hmw-daniel-despues, echo=FALSE, out.width="95%"}
+knitr::include_graphics("hmw_daniel_posiciones_despues.png")
+```
+
+En la imagen se observa el efecto de las órdenes ejecutadas: USO pasó de 340 a 170 títulos, GS aparece con −55 títulos al precio de ejecución de $879.00, y XOM conserva sus 1,216 títulos, porque la orden de compra límite no se ejecutó.
+
+**Beta del portafolio final.** La beta del portafolio contra el S&P 500 se calcula igual que en la sección 4.1.1, como el promedio de las betas contra el S&P 500 de las posiciones ponderado por su peso. Hay una diferencia en la presentación de la venta en corto: el simulador muestra el efectivo sin incluir lo obtenido por la venta en corto ($879.00 × 55 = $48,345.00), y suma al valor del portafolio solo la ganancia o pérdida de esa posición. Para calcular los pesos de forma consistente con la sección 4.1.2, la venta en corto se registra con su valor de mercado en negativo y lo obtenido por ella se suma al efectivo. Con este registro, la suma de las posiciones es igual al valor del portafolio que muestra el simulador.
+
+```{r portafolio-daniel-despues}
+final <- data.frame(
+  Activo  = c("MSFT", "AAPL", "XOM", "JPM", "USO", "GS (corto)", "Efectivo"),
+  Titulos = c(470, 730, 1216, 602, 170, -55, NA),
+  Valor   = c(250834.30, 250360.80, 215244.16, 201838.56, 26105.20,
+              -48329.60, 86315.80 + 55 * 879.00))
+final$Peso <- final$Valor / sum(final$Valor) * 100
+final$Beta <- c(sapply(mods[c("MSFT", "AAPL", "XOM", "JPM", "USO", "GS")],
+                       function(m) unname(coef(m)[2])), 0)
+final$Contribucion <- final$Peso / 100 * final$Beta
+beta_despues <- sum(final$Contribucion)
+
+knitr::kable(final, digits = c(0, 0, 2, 1, 3, 3), row.names = FALSE,
+             format.args = list(big.mark = ","),
+             col.names = c("Activo", "Títulos", "Valor (USD)", "Peso (%)",
+                           "Beta vs. S&P 500", "Peso × Beta"),
+             caption = "Portafolio final al 14 de octubre de 2026")
+```
+
+La suma de los valores de la tabla es de $`r format(round(sum(final$Valor), 2), big.mark = ",", nsmall = 2)`, igual al valor del portafolio que muestra el simulador. La beta del portafolio contra el S&P 500 es de `r round(beta_despues, 2)`.
+
+**Comparación antes y después.** La siguiente tabla compara el peso de cada posición en el portafolio inicial (sección 4.1.1) y en el portafolio final.
+
+```{r comparacion-antes-despues}
+comparacion <- data.frame(
+  Activo  = final$Activo,
+  Antes   = c(posiciones$Peso[1:5], 0, posiciones$Peso[6]),
+  Despues = final$Peso)
+comparacion$Cambio <- comparacion$Despues - comparacion$Antes
+
+knitr::kable(comparacion, digits = 1, row.names = FALSE,
+             col.names = c("Activo", "Peso inicial (%)", "Peso final (%)", "Cambio (puntos)"),
+             caption = "Peso de cada posición antes y después de las operaciones")
+```
+
+La comparación muestra los resultados de la estrategia:
+
+- **La beta del portafolio contra el S&P 500 bajó de `r round(beta_antes, 2)` a `r round(beta_despues, 2)`**, como se había estimado en la sección 4.1.2. El portafolio quedó más defensivo frente a los movimientos del mercado. La reducción se debe principalmente a la venta en corto de GS, que resta exposición al mercado, y al mayor peso del efectivo.
+- **La exposición a energía se redujo**: USO pasó de 5.1% a 2.5% del portafolio. Como la compra de XOM no se ejecutó, esa exposición no se reemplazó; la orden límite sigue abierta y, si se ejecuta, XOM aumentará su peso.
+- **El efectivo aumentó** de 5.9% a 13.1% del portafolio, por la venta de USO y por lo obtenido de la venta en corto.
+
+Sobre el límite de 25% por posición: en la gráfica de la derecha de la imagen, el simulador muestra a MSFT (25.27%) y AAPL (25.22%) ligeramente por arriba de 25%. Esto se debe a que el simulador calcula esos porcentajes sobre la suma de las posiciones largas y cortas, y no sobre el valor del portafolio. Medidos sobre el valor del portafolio, como en la tabla anterior, ambas representan 24.3%, por debajo del límite. Además, no se compraron títulos adicionales de ninguna de las dos: su peso cambió solo por el movimiento de sus precios.
+
+El valor del portafolio pasó de $1,027,943.54 a $1,030,714.22 entre el 13 y el 14 de octubre de 2026. Esta variación refleja tanto las operaciones como el movimiento de los precios de mercado en un solo día, por lo que no debe interpretarse como el resultado de la estrategia, cuyo objetivo es reducir la exposición del portafolio al mercado y no obtener un rendimiento en el corto plazo.
 
 ## 4.2 Operaciones en HowMarketsWork – Bárbara Martínez Flores
 
@@ -907,24 +1001,3 @@ Los tres son formas de estimar un modelo de efectos fijos, es decir, de controla
 - **Primeras diferencias:** a cada observación le resta la del periodo anterior de la misma unidad, lo que también elimina el efecto fijo. Cada unidad pierde su primera observación. La idea es parecida a la del paso de precios a rendimientos en la sección 1.1, en el que cada serie pasó de 445 precios a 444 rendimientos. Si el error original no está autocorrelacionado, el error en diferencias sí lo está.
 
 Tanto el estimador dentro de grupos como el de primeras diferencias eliminan, junto con el efecto fijo, cualquier variable explicativa que no cambie con el tiempo. Además, según Gujarati, los estimadores de primeras diferencias y de efectos fijos coinciden cuando solo hay dos periodos, pero difieren cuando hay más. Con 444 días por acción, en esta actividad los resultados de primeras diferencias no coincidirían con los de MCVD y dentro de grupos.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
