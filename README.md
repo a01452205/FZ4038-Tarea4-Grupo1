@@ -37,6 +37,9 @@ El documento está organizado en cinco partes:
 | `hmw_daniel_orden3_short_gs.png` | Orden de venta en corto de GS. |
 | `hmw_daniel_orden4_stop_gs.png` | Orden stop de recompra de protección de GS. |
 | `hmw_daniel_ordenes_pendientes.png` | Lista de órdenes pendientes al 13 de octubre de 2026. |
+| `hmw_daniel_orden5_compra_xom_gtc.png` | Nueva orden límite de compra de XOM con vigencia indefinida (14 de octubre de 2026). |
+| `hmw_daniel_ordenes_abiertas_14oct.png` | Lista de órdenes al 14 de octubre de 2026: ejecutadas, vencida y abiertas. |
+| `hmw_daniel_posiciones_despues.png` | Portafolio de Daniel Mondragón en HowMarketsWork después de las operaciones. |
 
 ## Cómo reproducir el análisis
 
