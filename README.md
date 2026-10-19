@@ -40,6 +40,17 @@ El documento está organizado en cinco partes:
 | `hmw_daniel_orden5_compra_xom_gtc.png` | Nueva orden límite de compra de XOM con vigencia indefinida (14 de octubre de 2026). |
 | `hmw_daniel_ordenes_abiertas_14oct.png` | Lista de órdenes al 14 de octubre de 2026: ejecutadas, vencida y abiertas. |
 | `hmw_daniel_posiciones_despues.png` | Portafolio de Daniel Mondragón en HowMarketsWork después de las operaciones. |
+| `hmw_barbara_posicionesantes16.png` | Portafolio de Bárbara Martínez en HowMarketsWork antes de las operaciones (16 de octubre de 2026). |
+| `hmw_barbara_PENG.png` | Evolución del precio de PENG en Yahoo Finance (análisis previo de la estrategia). |
+| `hmw_barbara_MXL.png` | Evolución del precio de MXL en Yahoo Finance (análisis previo de la estrategia). |
+| `hmw_barbara_orden1_venta_nvda.png` | Orden de venta parcial de NVDA. |
+| `hmw_barbara_orden2_venta_mxl.png` | Orden de venta total de MXL. |
+| `hmw_barbara_orden3_compra_xom.png` | Orden límite de compra de XOM. |
+| `hmw_barbara_orden4_short_gs.png` | Orden de venta en corto de GS. |
+| `hmw_barbara_orden5_stop_gs.png` | Orden stop de recompra de protección de GS. |
+| `hmw_barbara_ordenes_ejecutadas.png` | Historial de órdenes de Bárbara Martínez al 19 de octubre de 2026. |
+| `hmw_barbara_account_balances.png` | Saldos de la cuenta de Bárbara Martínez en HowMarketsWork después de las operaciones. |
+| `hmw_barbara_posiciones_despues.png` | Portafolio de Bárbara Martínez en HowMarketsWork después de las operaciones. |
 
 ## Cómo reproducir el análisis
 
@@ -48,3 +59,4 @@ El documento está organizado en cinco partes:
 3. Instalar los paquetes necesarios, si no están instalados:
    `install.packages(c("readxl", "quantmod"))`
 4. Ejecutar Knit para generar el HTML.
+5. La sección 4.2 descarga precios de Yahoo Finance con `getSymbols` (paquete `quantmod`), por lo que se requiere conexión a internet al ejecutar Knit.
