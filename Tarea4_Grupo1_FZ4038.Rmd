@@ -954,13 +954,299 @@ El valor del portafolio pasó de $1,027,943.54 a $1,030,714.22 entre el 13 y el 
 
 ## 4.2 Operaciones en HowMarketsWork – Bárbara Martínez Flores
 
+Para poder realizar un análisis a detalle, igualamos el periodo de revisión para las acciones en el portafolio de Bárbara. Siguiendo la misma metodología que estuvimos aplicando en la tarea, obtuvimos los rendimientos diarios de las 10 acciones de su portafolio: 
+
+```{r datos-barbara, message=FALSE, warning=FALSE}
+invisible(getSymbols(c("^GSPC", "AMZN", "CAT", "WMT", "COST", "SYNA", "PENG", "MXL", "FCX"),
+           from = "2025-01-02", to = "2026-10-13"))
+
+sp500_returns_daily       <- dailyReturn(GSPC$GSPC.Close) * 100
+amazon_returns_daily      <- dailyReturn(AMZN$AMZN.Close) * 100
+caterpillar_returns_daily <- dailyReturn(CAT$CAT.Close) * 100
+walmart_returns_daily     <- dailyReturn(WMT$WMT.Close) * 100
+costco_returns_daily      <- dailyReturn(COST$COST.Close) * 100
+synaptics_returns_daily   <- dailyReturn(SYNA$SYNA.Close) * 100
+penguin_returns_daily     <- dailyReturn(PENG$PENG.Close) * 100
+maxlinear_returns_daily   <- dailyReturn(MXL$MXL.Close) * 100
+freeport_returns_daily    <- dailyReturn(FCX$FCX.Close) * 100
+
+rend_bmf <- na.omit(merge(sp500_returns_daily, amazon_returns_daily, caterpillar_returns_daily,
+                          walmart_returns_daily, costco_returns_daily, synaptics_returns_daily,
+                          penguin_returns_daily, maxlinear_returns_daily, freeport_returns_daily))
+colnames(rend_bmf) <- c("SPX", "AMZN", "CAT", "WMT", "COST", "SYNA", "PENG", "MXL", "FCX")
+rend_bmf <- as.data.frame(rend_bmf)[-1, ]
+
+nuevas <- c("AMZN", "CAT", "WMT", "COST", "SYNA", "PENG", "MXL", "FCX")
+mods_bmf <- lapply(nuevas, function(a) lm(rend_bmf[[a]] ~ SPX, data = rend_bmf))
+names(mods_bmf) <- nuevas
+
+# NVDA y AAPL se toman de los modelos de la Parte 3 (mt403 y mt401)
+mods_bmf <- c(mods[c("NVDA", "AAPL")], mods_bmf)
+
+betas_bmf <- do.call(rbind, lapply(names(mods_bmf), function(a) {
+  cf <- coef(summary(mods_bmf[[a]]))
+  data.frame(Activo = a,
+             Beta   = cf[2, 1],
+             R2     = summary(mods_bmf[[a]])$r.squared,
+             p_beta = cf[2, 4],
+             Sigma  = summary(mods_bmf[[a]])$sigma)
+}))
+betas_bmf <- betas_bmf[order(-betas_bmf$Beta), ]
+
+knitr::kable(betas_bmf, digits = 3, row.names = FALSE,
+             col.names = c("Activo", "Beta vs. S&P 500", "R²", "Valor p", "Desv. est. del error"),
+             caption = "Beta contra el S&P 500 de las posiciones del portafolio")
+```
+
+Con esta información nos damos cuenta que las acciones del modelo de Tecnología (Semiconductores) originalmente revisado, el cual incluye MXL, PENG, SYNA y NVDA son las acciones más sensibles al mercado (y tenemos casi el 40% del portafolio en esta industria), y sin duda han reaccionado hacia la baja en las últimas semanas. Éstas se están moviendo en promedio más del doble que el S&P 500, con betas contra el S&P 500 entre 1.95 (NVDA) y 2.78 (MXL). La semana pasada agregamos a FCX para diversificar, pero nos damos cuenta con su beta contra el S&P 500 (1.82) que también es muy sensible al mercado, por lo que no funcionó como esperábamos. 
+Por otro lado, vemos como WMT y COST casi no dependen del mercado (beta contra el S&P 500 < 0.5), por eso vemos como ellas siguen subiendo después de la caída del 14 de octubre en el mercado. 
+
+
 ### 4.2.1 Portafolio inicial
+
+En la siguiente imagen se observa el portafolio en HowMarketsWork al 16 de octubre de 2026, antes de las operaciones de esta actividad:
+
+```{r hmw-barbara-antes, echo=FALSE, out.width="95%"}
+knitr::include_graphics("hmw_barbara_posicionesantes16.png")
+```
+
+El portafolio tiene un valor total de $938,913.80, con diez posiciones largas, las que tenía al 16 de octubre, y ninguna posición en corto: NVDA (885 títulos, $189,505.05), AMZN (571 títulos, $142,750.00), CAT (184 títulos, $134,459.84), WMT (1,060 títulos, $125,938.60), COST (83 títulos, $82,096.13), SYNA (583 títulos, $68,315.94), PENG (897 títulos, $51,218.70), MXL (660 títulos, $47,071.20), FCX (676 títulos, $47,009.04) y AAPL (1 título, $343.46). El efectivo disponible es de $50,205.84.
+
+**Beta del portafolio contra el S&P 500.** Para medir qué tan expuesto está el portafolio a los movimientos del mercado se calcula su beta contra el S&P 500. La beta de un portafolio es el promedio de las betas de sus posiciones, ponderado por el peso de cada una en el valor total:
+
+$$\beta_{portafolio} = \sum_{i} w_i \, \beta_i$$
+
+donde $w_i$ es el peso de la posición $i$ (su valor entre el valor total del portafolio) y $\beta_i$ es su beta contra el S&P 500. El efectivo tiene beta cero, porque su valor no cambia con el mercado. De las diez posiciones, solo NVDA y AAPL forman parte de las acciones analizadas en la Parte 3, por lo que su beta se toma directamente de los modelos mt403 y mt401 (beta cruda, igual en Bloomberg y en RStudio). Para las otras ocho posiciones se estima la beta con el mismo método y el mismo periodo de la Parte 3: una regresión lineal simple de sus rendimientos diarios en porcentaje contra los del S&P 500, del 2 de enero de 2025 al 12 de octubre de 2026. A diferencia de la Parte 3, los precios de estas ocho acciones y del S&P 500 se descargan de Yahoo Finance con getSymbols.
+
+Como habíamos visto, las cuatro acciones de semiconductores del portafolio son las más sensibles al mercado: MXL (2.777), PENG (2.330), SYNA (2.208) y NVDA (1.947) se mueven en promedio alrededor del doble que el S&P 500. En el otro extremo, WMT (0.431) y COST (0.304) tienen las betas más bajas y también las $R^2$ más bajas (0.075 y 0.057), es decir, el S&P 500 explica menos del 8% de sus movimientos. En la siguiente tabla se calcula el peso de cada posición a partir de los valores de la imagen, y su beta se toma de los modelos anteriores.
+
+```{r portafolio-barbara-antes}
+posiciones_bmf <- data.frame(
+  Activo  = c("NVDA", "AMZN", "CAT", "WMT", "COST", "SYNA", "PENG", "MXL", "FCX", "AAPL", "Efectivo"),
+  Titulos = c(885, 571, 184, 1060, 83, 583, 897, 660, 676, 1, NA),
+  Valor   = c(189505.05, 142750.00, 134459.84, 125938.60, 82096.13, 68315.94,
+              51218.70, 47071.20, 47009.04, 343.46, 50205.84))
+posiciones_bmf$Peso <- posiciones_bmf$Valor / sum(posiciones_bmf$Valor) * 100
+posiciones_bmf$Beta <- c(sapply(mods_bmf[c("NVDA", "AMZN", "CAT", "WMT", "COST",
+                                           "SYNA", "PENG", "MXL", "FCX", "AAPL")],
+                                function(m) unname(coef(m)[2])), 0)
+posiciones_bmf$Contribucion <- posiciones_bmf$Peso / 100 * posiciones_bmf$Beta
+beta_antes_bmf <- sum(posiciones_bmf$Contribucion)
+
+knitr::kable(posiciones_bmf, digits = c(0, 0, 2, 1, 3, 3), row.names = FALSE,
+             format.args = list(big.mark = ","),
+             col.names = c("Activo", "Títulos", "Valor (USD)", "Peso (%)", "Beta vs. S&P 500", "Peso × Beta"),
+             caption = "Portafolio inicial al 16 de octubre de 2026")
+```
+
+La última columna es la contribución de cada posición a la beta del portafolio contra el S&P 500, y su suma es la beta del portafolio contra el S&P 500: 1.40. Es decir, ante un movimiento de 1% del S&P 500, el portafolio se mueve en promedio alrededor de 1.40%. Es mayor a 1 por el peso de las acciones de semiconductores: NVDA, SYNA, PENG y MXL representan 38.0% del portafolio, pero aportan 0.820 de la beta del portafolio contra el S&P 500, es decir, alrededor de 58% del total. NVDA es la posición que más contribuye a la beta del portafolio contra el S&P 500 (0.393), por ser la de mayor peso (20.2%) y tener una beta cercana a 2 (1.947). En cambio, WMT y COST representan 22.1% del portafolio, pero solo aportan 0.085 de la beta del portafolio contra el S&P 500, por sus betas bajas (0.431 y 0.304); junto con el efectivo (5.3%), moderan la exposición del portafolio al mercado. Ninguna posición se acerca al límite de 25% por posición: la más grande, NVDA, representa 20.2% del portafolio.
 
 ### 4.2.2 Estrategia
 
-### 4.2.3 Órdenes y ejecución
+Ya que detectamos que alrededor del 38% del portafolio lo tenemos en acciones de semiconductores, los cuales casi todos tienen betas contra el S&P 500 por encima de 2, cambiamos un poco la estrategia hacia acciones más sólidas, buscando sustituirlas únicamente con acciones analizadas en las Partes 2 y 3 de esta actividad. De las diez posiciones del portafolio, solo NVDA y AAPL forman parte de las ocho acciones seleccionadas en Bloomberg, por lo que la estrategia se concentra en NVDA, la posición con mayor contribución a la beta del portafolio contra el S&P 500, y agrega dos acciones que no forman parte del portafolio pero que se analizaron en la Parte 3: Exxon Mobil (XOM), con una compra, y Goldman Sachs (GS), con una venta en corto. Además, se vende la posición en MaxLinear (MXL), la acción con la beta más alta del portafolio (sección 4.2.1), se analizó también vender PENG, pero se decidió mantenerlo porque PENG a diferencia de MXL sí está ganando dinero, ya reportó el 6 de octubre y sus resultados fueron mayor a los esperados y tiene una desv. estándar menor a MXL, por lo que las otras siete posiciones se mantienen sin cambios. Se utilizan distintos tipos de operación (venta, compra, venta en corto y recompra), distintos tipos de orden (de mercado, límite y stop) y distintas vigencias (de un día e indefinida).
 
-### 4.2.4 Portafolio final
+**Análisis previo: las dos posiciones con mayor caída.** Antes de definir las operaciones se revisaron PENG y MXL, las dos posiciones con mayor pérdida del portafolio al 16 de octubre (−21.88% y −26.24% sobre su precio de compra, respectivamente). En las siguientes imágenes de Yahoo Finance se observa la evolución de su precio en el último mes, justificando que al momento de compra, tenían historial importante a la alza.
+
+```{r yahoo-barbara-peng, echo=FALSE, out.width="90%"}
+knitr::include_graphics("hmw_barbara_PENG.png")
+```
+
+```{r yahoo-barbara-mxl, echo=FALSE, out.width="90%"}
+knitr::include_graphics("hmw_barbara_MXL.png")
+```
+
+Ambas acciones cayeron alrededor de 25% en los últimos cinco días (−25.14% PENG y −25.83% MXL), después de un fuerte avance en el año (+191.92% y +309.18%, respectivamente). Las dos tienen las betas contra el S&P 500 más altas del portafolio (2.330 y 2.777), por lo que la venta generalizada de semiconductores de esta semana, las afectó más que al resto. Sin embargo, la decisión no se basa en cuánto han caído, sino en su situación actual, y en ese aspecto las dos empresas son muy distintas:
+
+- **PENG se mantiene.** Es una empresa rentable, con una razón precio/utilidad de 22, y su caída no se debe a la empresa: el 6 de octubre reportó resultados del tercer trimestre por arriba de lo esperado (utilidad por acción de $1.00 contra $0.77 estimado, e ingresos de $566.7 millones contra $521.0 millones), y los analistas mantienen una recomendación de compra moderada, con un precio objetivo promedio de $87.50 (MarketBeat). Además, su precio de $57.10 sigue por arriba de sus promedios móviles de 50 y 200 días ($56.46 y $52.27). Con un peso de 5.5% del portafolio, su riesgo es moderado, y la venta en corto de GS ayuda a cubrirlo frente a nuevas caídas del mercado.
+- **MXL se vende.** A diferencia de PENG, es una empresa con pérdidas (utilidad por acción de −$1.19 en los últimos doce meses). Además, presentará sus resultados del tercer trimestre el 22 de octubre: después de un avance de más de 300% en el año, el reporte puede provocar un movimiento muy fuerte en cualquier dirección. Es también la posición con mayor riesgo del portafolio: tiene la beta contra el S&P 500 más alta (2.777) y la mayor variación no explicada por el mercado (desviación estándar del error de 6.142). Por estas razones, se vende completa antes del reporte.
+
+Las órdenes 1 a 4 se colocan el 18 de octubre de 2026, con el mercado cerrado, para ejecutarse a partir de la apertura del día siguiente. La orden 5 se coloca una vez ejecutada la venta en corto, porque protege una posición que antes no existe. El resultado de la estrategia depende de que las órdenes se ejecuten: las de mercado se ejecutan al precio de apertura, la orden límite solo si el precio llega al nivel indicado, y la orden stop solo si GS sube hasta su nivel.
+
+| # | Operación | Acción | Tipo de orden | Vigencia | Títulos |
+|---|---|---|---|---|---|
+| 1 | Venta parcial | NVDA | Mercado | Un día | 200 |
+| 2 | Venta total | MXL | Mercado | Un día | 660 |
+| 3 | Compra | XOM | Límite a $178.00 | Un día | 340 |
+| 4 | Venta en corto (*short*) | GS | Mercado | Un día | 50 |
+| 5 | Recompra (*cover*) de protección | GS | Stop a 8% sobre el precio de ejecución de la orden 4 | Indefinida | 50 |
+
+La justificación de cada operación es la siguiente:
+
+1. **Venta parcial de NVDA.** NVDA es la posición que más contribuye a la beta del portafolio contra el S&P 500 (0.393 de 1.40), por ser la de mayor peso (20.2%) y tener la beta contra el S&P 500 más alta de las ocho acciones de la Parte 3 (1.947). Además, el mercado explica más de la mitad de su variación diaria ($R^2$ de 0.513), por lo que es la posición que más expone al portafolio a las caídas del mercado, como la del 14 de octubre, cuando el S&P 500 cayó 1.1% y NVDA 3.2%. No se vende completa porque es la principal apuesta de crecimiento del portafolio, de acuerdo con su perfil agresivo. Con la venta de 200 títulos, NVDA pasaría de 20.2% a cerca de 15.6% del portafolio.
+2. **Venta total de MXL.** Por las razones del análisis anterior: es una empresa con pérdidas, cara frente a su historia, con un reporte de resultados próximo cuyo efecto no puede anticiparse, y es la posición con la beta y la variación propia más altas del portafolio. Su venta es la que más reduce la beta del portafolio contra el S&P 500.
+3. **Compra de XOM.** XOM es la acción de la Parte 3 que menos depende del mercado: su beta contra el S&P 500 es de 0.169 y el mercado explica apenas 1.2% de su variación diaria ($R^2$ de 0.012). Además, su correlación con NVDA es prácticamente cero (0.005, Parte 2), por lo que diversifica un portafolio concentrado en tecnología. Reemplaza con una acción de beta baja parte del valor que se obtiene con las ventas de NVDA y MXL. Su riesgo es propio del sector energético (desviación estándar del error de 1.604), no del mercado. Con la compra, XOM representaría cerca de 6.4% del portafolio. Se usa una orden límite a $178.00, cercana al último precio ($178.98), para no pagar un precio mayor si el mercado abre al alza; si el precio no llega a ese nivel, la orden vence sin ejecutarse.
+4. **Venta en corto de GS.** No es una apuesta contra Goldman Sachs, sino una cobertura del riesgo de mercado del portafolio. GS es la acción con el $R^2$ más alto de la Parte 3 (0.561) y la de mayor correlación con el S&P 500 (0.749), es decir, la que más depende del mercado, lo que la hace la cobertura más confiable entre las ocho acciones. Con una beta contra el S&P 500 de 1.471, la venta en corto resta exposición al mercado y cubre en parte a las posiciones de semiconductores que se mantienen (NVDA, SYNA y PENG). La cobertura tiene un costo: si el mercado sube, la venta en corto pierde y reduce las ganancias del resto del portafolio; a cambio, si el mercado cae, amortigua las pérdidas. El tamaño es pequeño (cerca de 4.7% del portafolio) para limitar este efecto.
+5. **Recompra de protección de GS.** En una venta en corto, la pérdida no tiene un límite teórico si el precio sube. La orden stop cierra automáticamente la posición si GS sube 8% sobre el precio al que se ejecutó la venta en corto, de modo que la pérdida máxima de la posición queda acotada. El margen de 8% evita que la orden se active con un movimiento normal de un día: el 16 de octubre, GS se movió entre $876.81 y $909.87, un rango de 3.8%, por lo que el margen equivale a más del doble de un movimiento normal de un día. Se coloca con vigencia indefinida (*Good til Cancel*), porque la protección debe mantenerse activa mientras exista la posición en corto. Por su naturaleza, esta orden normalmente no se ejecuta; solo se activa si el precio sube de forma importante.
+
+**Regla de seguimiento para la orden límite.** Si la orden 3 vence sin ejecutarse, se vuelve a colocar con el mismo precio límite de $178.00, pero con vigencia indefinida. No se sube el precio límite para perseguir el precio de mercado: el criterio de compra se mantiene, y la orden queda activa hasta que XOM llegue a ese nivel o hasta que se cancele.
+
+**Efecto estimado en el portafolio.** La siguiente tabla estima cómo quedaría el portafolio si las órdenes 1 a 4 se ejecutaran a los precios de referencia del 16 de octubre (NVDA a $214.13, MXL a $71.32, XOM a $178.00 y GS a $881.26). La venta en corto se registra con valor negativo, porque gana cuando el precio baja, y el efectivo aumenta con lo obtenido de las ventas y se reduce con la compra.
+
+```{r portafolio-barbara-estimado}
+p_nvda <- 214.13; p_mxl <- 71.32; p_xom <- 178.00; p_gs <- 881.26
+
+estimado_bmf <- data.frame(
+  Activo = c("NVDA", "AMZN", "CAT", "WMT", "COST", "SYNA", "PENG", "MXL", "FCX", "AAPL",
+             "XOM", "GS (corto)", "Efectivo"),
+  Valor  = c(189505.05 - 200 * p_nvda, 142750.00, 134459.84, 125938.60, 82096.13,
+             68315.94, 51218.70, 47071.20 - 660 * p_mxl, 47009.04, 343.46,
+             340 * p_xom,
+             -50 * p_gs,
+             50205.84 + 200 * p_nvda + 660 * p_mxl - 340 * p_xom + 50 * p_gs))
+estimado_bmf$Peso <- estimado_bmf$Valor / sum(estimado_bmf$Valor) * 100
+estimado_bmf$Beta <- c(sapply(mods_bmf[c("NVDA", "AMZN", "CAT", "WMT", "COST",
+                                         "SYNA", "PENG", "MXL", "FCX", "AAPL")],
+                              function(m) unname(coef(m)[2])),
+                       unname(coef(mods$XOM)[2]), unname(coef(mods$GS)[2]), 0)
+estimado_bmf$Contribucion <- estimado_bmf$Peso / 100 * estimado_bmf$Beta
+beta_estimada_bmf <- sum(estimado_bmf$Contribucion)
+
+knitr::kable(estimado_bmf, digits = c(0, 2, 1, 3, 3), row.names = FALSE,
+             format.args = list(big.mark = ","),
+             col.names = c("Activo", "Valor (USD)", "Peso (%)", "Beta vs. S&P 500", "Peso × Beta"),
+             caption = "Portafolio estimado después de las operaciones 1 a 4")
+```
+
+Si las órdenes se ejecutan a estos precios, la beta del portafolio contra el S&P 500 bajaría de 1.40 a 1.12: el portafolio se vuelve menos sensible a los movimientos del mercado. La reducción de 0.29 se debe a cuatro efectos. El mayor es la venta de MXL, la acción con la beta más alta del portafolio, que elimina su contribución de 0.139. Le sigue la venta parcial de NVDA, que reduce su peso de 20.2% a 15.6% y su contribución de 0.393 a 0.304. La venta en corto de GS (−4.7% del portafolio) resta 0.069 a la beta, y la compra de XOM (6.4% del portafolio) apenas la aumenta en 0.011, por su beta cercana a cero. El portafolio sigue siendo agresivo, con una beta contra el S&P 500 mayor a 1, de acuerdo con su perfil de inversión, y el efectivo aumenta de 5.3% a 13.2% del portafolio por lo obtenido de las ventas. El valor total del portafolio no cambia por las operaciones, solo su composición. El resultado real se verifica con el portafolio final (sección 4.2.5).
+
+### 4.2.3 Órdenes colocadas
+
+En esta sección se presentan las órdenes tal como se colocaron en HowMarketsWork; el resultado de su ejecución se presenta en la sección 4.2.4. Cada imagen muestra la pantalla de la orden una vez confirmada: el tipo de operación (*Action*), la acción (*Symbol*), el número de títulos (*Quantity*), el tipo de orden (*Type*), el precio límite o stop cuando aplica (*Limit/Stop Price*), la vigencia de la orden (*Order Term*) y la cotización de la acción al momento de colocarla. En la parte superior, el simulador indica que el mercado estaba cerrado y que las órdenes de mercado se ejecutarían a la apertura del siguiente día hábil, y en la parte inferior confirma que la orden se colocó correctamente (*Order placed successfully*). El monto estimado de cada orden se calcula con la cotización de la imagen y la comisión de $10.00 por operación.
+
+#### Órdenes del 18 de octubre de 2026
+
+**Orden 1: venta parcial de NVDA.** En la siguiente imagen se observa la orden de venta (*Sell*) de 200 títulos de NVDA a mercado (*Market*), con vigencia de un día (*Good for Day*). El último precio de NVDA era de $214.13 y el precio de compra del mercado (*bid*) de $213.67, por lo que el monto estimado de la venta es de $42,724.00 (200 títulos a $213.67, menos la comisión).
+
+```{r hmw-barbara-orden1, echo=FALSE, out.width="90%"}
+knitr::include_graphics("hmw_barbara_orden1_venta_nvda.png")
+```
+
+**Orden 2: venta total de MXL.** En la siguiente imagen se observa la orden de venta (*Sell*) de los 660 títulos de MXL a mercado, con vigencia de un día. El último precio de MXL era de $71.32 y el precio *bid* de $70.65, por lo que el monto estimado de la venta es de $46,619.00 (660 títulos a $70.65, menos la comisión). La diferencia entre el precio *bid* y el de venta del mercado (*ask*) de $71.52 es de $0.87, más amplia en proporción que la de NVDA ($0.08), lo que refleja el menor volumen de operación de MXL.
+
+```{r hmw-barbara-orden2, echo=FALSE, out.width="90%"}
+knitr::include_graphics("hmw_barbara_orden2_venta_mxl.png")
+```
+
+**Orden 3: compra de XOM.** En la siguiente imagen se observa la orden de compra (*Buy*) de 340 títulos de XOM con orden límite (*Limit*) a $178.00 y vigencia de un día. El último precio de XOM era de $178.98 y el precio *ask* de $179.31, por arriba del límite: la orden solo se ejecuta si XOM se ofrece a $178.00 o menos. Si se ejecuta al precio límite, su costo estimado es de $60,530.00 (340 títulos a $178.00, más la comisión).
+
+```{r hmw-barbara-orden3, echo=FALSE, out.width="90%"}
+knitr::include_graphics("hmw_barbara_orden3_compra_xom.png")
+```
+
+**Orden 4: venta en corto de GS.** En la siguiente imagen se observa la orden de venta en corto (*Short*) de 50 títulos de GS a mercado, con vigencia de un día. El último precio de GS era de $881.26 y el precio *bid* de $877.20, por lo que el monto estimado es de $43,850.00 (50 títulos a $877.20, menos la comisión), lo que representa cerca de 4.7% del valor del portafolio.
+
+```{r hmw-barbara-orden4, echo=FALSE, out.width="90%"}
+knitr::include_graphics("hmw_barbara_orden4_short_gs.png")
+```
+
+#### Órdenes del 19 de octubre de 2026
+
+El 19 de octubre, a la apertura, se ejecutaron las cuatro órdenes colocadas el 18 de octubre: las ventas de NVDA y MXL, la compra límite de XOM y la venta en corto de GS (el detalle de la ejecución se presenta en la sección 4.2.4). Como la compra de XOM sí se ejecutó, no fue necesario aplicar la regla de seguimiento de la orden límite. Con base en esos resultados, ese día se colocó una orden nueva, de acuerdo con la estrategia de la sección 4.2.2.
+
+**Orden 5: recompra de protección de GS.** Una vez ejecutada la venta en corto a $881.00, se colocó la orden de protección. En la siguiente imagen se observa la orden de recompra (*Cover*) de 50 títulos de GS con orden stop (*Stop*) a $951.00, que equivale a 8% por arriba del precio de ejecución de la venta en corto ($881.00 × 1.08 = $951.48, redondeado a $951.00). Su vigencia es indefinida (*Good til Cancel*): la protección se mantiene activa todos los días mientras exista la posición en corto. La orden se recibió el 19 de octubre a las 10:56 (hora del este de EE.UU.). Al momento de colocarla, el último precio de GS era de $883.00, por lo que la orden solo se activaría si GS sube cerca de 7.7% desde ese nivel.
+
+```{r hmw-barbara-orden5, echo=FALSE, out.width="90%"}
+knitr::include_graphics("hmw_barbara_orden5_stop_gs.png")
+```
+
+### 4.2.4 Ejecución de las órdenes
+
+Al revisar el historial de órdenes (*Order History*) el 19 de octubre, las cuatro órdenes del 18 de octubre aparecen como **Filled**. La orden 5 (Stop - Cover de GS) sigue **abierta**, con las opciones *Cancel* y *Edit*, porque el precio de GS no ha llegado a $951.00.
+
+```{r hmw-barbara-ordenes-19oct, echo=FALSE, out.width="95%"}
+knitr::include_graphics("hmw_barbara_ordenes_ejecutadas.png")
+```
+
+```{r ejecucion-barbara, echo=FALSE}
+ejecucion_bmf <- data.frame(
+  Num = 1:5,
+  Operacion = c("Market - Sell", "Market - Sell", "Limit - Buy", "Market - Short", "Stop - Cover"),
+  Accion = c("NVDA", "MXL", "XOM", "GS", "GS"),
+  Titulos = c(200, 660, 340, 50, 50),
+  Precio_referencia = c(214.13, 71.32, 178.00, 881.26, 951.00),
+  Resultado = c("Ejecutada", "Ejecutada", "Ejecutada", "Ejecutada", "Abierta (GTC)"),
+  Precio_ejecucion = c(217.57, 76.01, 177.93, 881.00, NA))
+knitr::kable(ejecucion_bmf, digits = 2,
+             col.names = c("#", "Operación", "Acción", "Títulos", "Precio de referencia",
+                           "Resultado", "Precio de ejecución"),
+             caption = "Resultado de las órdenes en HowMarketsWork")
+```
+
+Resultados por orden:
+
+- **Orden 1 (NVDA):** se vendieron 200 títulos a $217.57, $3.44 arriba del precio de referencia ($214.13). Ingresaron 200 × 217.57 − 10 = **$43,504.00**.
+- **Orden 2 (MXL):** se vendieron los 660 títulos a $76.01, $4.69 arriba de la referencia ($71.32). Ingresaron 660 × 76.01 − 10 = **$50,156.60**, y MXL salió por completo del portafolio.
+- **Orden 3 (XOM):** la orden límite a $178.00 se ejecutó a $177.93, es decir, $0.07 por debajo del límite. El costo fue 340 × 177.93 + 10 = **$60,506.20**.
+- **Orden 4 (GS):** se vendieron en corto 50 títulos a $881.00, $0.26 debajo de la referencia ($881.26). Se recibieron 50 × 881.00 = **$44,050.00** (*Short Proceeds*) y se pagaron $10 de comisión.
+- **Orden 5 (GS):** el stop de cobertura a $951.00 sigue abierto. Se activará si GS sube 8% sobre el precio de venta en corto y así limita la pérdida máxima a unos $3,500.
+
+```{r hmw-barbara-balances, echo=FALSE, out.width="90%"}
+knitr::include_graphics("hmw_barbara_account_balances.png")
+```
+
+Verificación del efectivo: 50,205.84 + 43,504.00 + 50,156.60 − 60,506.20 − 10 = $83,350.24. El simulador muestra un *Cash Balance* de **$83,400.94**. La diferencia de $50.70 corresponde a los dividendos recibidos (*Total Dividends*). El simulador no suma al efectivo los $44,050.00 del corto (*Short Proceeds*); los muestra por separado y solo descuenta la comisión de $10. La comisión total acumulada, $200.00, corresponde a 20 operaciones de $10 cada una.
+
+
+### 4.2.5 Portafolio final
+
+```{r hmw-barbara-despues, echo=FALSE, out.width="95%"}
+knitr::include_graphics("hmw_barbara_posiciones_despues.png")
+```
+
+Después de las operaciones, NVDA bajó de 885 a 685 títulos, MXL salió del portafolio, entró XOM con 340 títulos y se abrió una posición corta de 50 títulos de GS. En la captura de posiciones, el simulador muestra un valor de mercado largo de $866,153.01 y un valor corto de $44,132.25.
+
+```{r portafolio-barbara-despues}
+final_bmf <- data.frame(
+  Activo = c("NVDA","AMZN","CAT","WMT","COST","SYNA","PENG","FCX","AAPL","XOM","GS (corto)","Efectivo"),
+  Titulos = c(685, 571, 184, 1060, 83, 583, 897, 676, 1, 340, -50, NA),
+  Valor = c(148703.23, 148067.44, 132952.88, 125843.20, 82354.26, 68420.88, 52317.53,
+            46613.58, 344.72, 60535.30, -44132.25, 83400.94 + 50 * 881.00))
+final_bmf$Peso <- final_bmf$Valor / sum(final_bmf$Valor) * 100
+final_bmf$Beta <- c(sapply(mods_bmf[c("NVDA","AMZN","CAT","WMT","COST","SYNA","PENG","FCX","AAPL")],
+                           function(m) unname(coef(m)[2])),
+                    unname(coef(mods$XOM)[2]), unname(coef(mods$GS)[2]), 0)
+final_bmf$Contribucion <- final_bmf$Peso / 100 * final_bmf$Beta
+beta_despues_bmf <- sum(final_bmf$Contribucion)
+knitr::kable(final_bmf, digits = c(0, 0, 2, 1, 3, 3), row.names = FALSE,
+             format.args = list(big.mark = ","),
+             col.names = c("Activo", "Títulos", "Valor (USD)", "Peso (%)", "Beta vs. S&P 500", "Peso × Beta"),
+             caption = "Portafolio final al 19 de octubre de 2026")
+```
+
+La posición corta de GS aparece con valor negativo, y el efectivo incluye los $44,050.00 recibidos por el corto. La suma de la tabla es $`r format(round(sum(final_bmf$Valor), 2), big.mark = ",", nsmall = 2)`. El simulador reporta un *Portfolio Value* de $951,082.31; la diferencia se debe a que los precios de la captura de posiciones y los de Account Balances son de momentos distintos del día. La beta del portafolio contra el S&P 500 después de las operaciones es **`r sprintf("%.2f", beta_despues_bmf)`**.
+
+```{r comparacion-barbara}
+comparacion_bmf <- data.frame(
+  Indicador = c("Valor del portafolio ($)", "Beta del portafolio contra el S&P 500", "Peso del efectivo (%)",
+                "Peso de NVDA (%)", "Peso de MXL (%)"),
+  Antes = c(sum(posiciones_bmf$Valor), beta_antes_bmf,
+            posiciones_bmf$Peso[posiciones_bmf$Activo == "Efectivo"],
+            posiciones_bmf$Peso[posiciones_bmf$Activo == "NVDA"],
+            posiciones_bmf$Peso[posiciones_bmf$Activo == "MXL"]),
+  Despues = c(sum(final_bmf$Valor), beta_despues_bmf,
+              final_bmf$Peso[final_bmf$Activo == "Efectivo"],
+              final_bmf$Peso[final_bmf$Activo == "NVDA"], 0))
+comparacion_bmf$Cambio <- comparacion_bmf$Despues - comparacion_bmf$Antes
+knitr::kable(comparacion_bmf, digits = 2,
+             format.args = list(big.mark = ","),
+             col.names = c("Indicador", "Antes", "Después", "Cambio"),
+             caption = "Comparación del portafolio antes y después de las operaciones")
+```
+
+Resultados:
+
+- La beta del portafolio contra el S&P 500 bajó de `r round(beta_antes_bmf, 2)` a `r round(beta_despues_bmf, 2)`. Ahora, si el S&P 500 cae 1%, el portafolio caería en promedio alrededor de `r round(beta_despues_bmf, 2)`% en lugar de `r round(beta_antes_bmf, 2)`%.
+- MXL, una acción de alta volatilidad, salió por completo del portafolio.
+- NVDA bajó a 685 títulos y pasó a pesar cerca de 15.7% del portafolio.
+- El corto de GS resta beta contra el S&P 500 al portafolio. XOM agrega muy poca beta contra el S&P 500 (0.169) y diversifica, porque casi no se mueve con NVDA (correlación de 0.005).
+- El efectivo, incluyendo lo recibido por el corto, sube a cerca de 13.4% del portafolio y no tiene riesgo de mercado.
+- El stop de $951.00 sobre GS sigue abierto y protege la posición corta si GS sube con fuerza.
+
+Ninguna acción supera el límite de 25% del portafolio. La mayor es NVDA, con cerca de 15.7%, seguida de AMZN (15.6%) y CAT (14.0%), como también se ve en la gráfica de pastel del simulador.
+
+Finalmente, el simulador reporta un *Portfolio Value* de $951,082.31, lo que equivale a un rendimiento acumulado de −4.89% desde el inicio, contra −0.49% del SPY en el mismo periodo. Este resultado no debe interpretarse como efecto de la estrategia: se debe sobre todo a la caída de las acciones compradas el 12 de octubre (por ejemplo, PENG −20.21% y CAT −11.56%). El objetivo de las operaciones del 18 de octubre era reducir la beta del portafolio contra el S&P 500, no generar una ganancia en pocos días.
+
+
 
 # Parte 5. Preguntas del capítulo 16 de Gujarati (16.1 a 16.4)
 
